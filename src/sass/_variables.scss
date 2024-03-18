@@ -1,0 +1,18 @@
+// mixins
+@mixin flex($flex-direction, $align-items, $justify-content, $gap) {
+    display: flex;
+    flex-direction: $flex-direction;
+    align-items: $align-items;
+    justify-content: $justify-content;
+    gap: $gap;
+}
+
+// colors
+$black: #111318;
+$white: #ffffff;
+$bg-white: #fafafa;
+$green: #00CC9C;
+$light-green: #43FFD3;
+$matte-black: #222222;
+$dark-gray: #555555;
+$gray: #dddddd;

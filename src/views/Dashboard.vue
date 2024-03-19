@@ -11,45 +11,70 @@
     </div>
 
     <div class="content">
-      <div class="url--field" v-if="currentActiveTab === 0">
-          <h2>
-            Here's that link! <span>{{ shortURL }}</span>
-          </h2>
-          <button>copy</button>
-        </div>
+      <div class="url--field" v-if="currentActiveTab === 0 && isShortLinkCreated">
+        <h2>
+          Here's that link! <span>{{ shortURL }}</span>
+        </h2>
+        <button @click="copyToClipboard(shortURL)">copy</button>
+      </div>
 
       <form v-if="currentActiveTab === 0" class="form--one" @submit.prevent="shortenLink(URLRef)">
         <div class="fields">
           <h1>Shorten URL</h1>
           <div class="field">
             <label for="url">URL</label>
-            <input type="text" id="url" v-model="URLRef">
+            <input type="text" id="url" v-model="URLRef" required>
           </div>
 
-          <button :disabled="!shortURL">
+          <button>
             <Loader span-dimension="20px" v-if="isLoading" />
             <span v-else>Shorten</span>
           </button>
         </div>
       </form>
 
-      <form v-if="currentActiveTab === 1">
-        Hello code
+      <form v-if="currentActiveTab === 1" class="form--one" @submit.prevent="generateQRCode(URLRef)">
+        <div class="fields">
+          <h1>Generate QR Code</h1>
+          <div class="field">
+            <label for="url">URL</label>
+            <input type="text" id="url" v-model="URLRef" required>
+          </div>
+
+          <button>
+            <Loader span-dimension="20px" v-if="isLoading" />
+            <span v-else>Generate</span>
+          </button>
+        </div>
       </form>
 
       <table v-if="currentActiveTab === 2">
-        Hello table!
-      </table>
-
-      <table v-if="currentActiveTab === 3">
-        Hello second Table!
+        <tr>
+          <th>
+            URL
+          </th>
+          <th>
+            Short URL
+          </th>
+          <th>
+            Actions
+          </th>
+        </tr>
+        <tr v-for="item in userLinks">
+          <td>{{ item.link }}</td>
+          <td>{{ item.shortLink }}</td>
+          <td>
+            <button @click="copyToClipboard(item.shortLink)">Copy</button>
+            <button @click="deleteLink(item.id)">Delete</button>
+          </td>
+        </tr>
       </table>
     </div>
   </main>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, onMounted, ref } from 'vue';
 import type { Ref } from 'vue';
 import MenuButton from '@/components/MenuButton.vue';
 import Loader from '@/components/Loader.vue';
@@ -66,14 +91,16 @@ export default defineComponent({
     const sidebarItems: Ref<string[]> = ref([
       'Create new url',
       'New QR code',
-      'Your links',
-      'Analytics'
+      'Your links'
     ]),
       currentActiveTab: Ref<number> = ref(0),
       isSidebarActive: Ref<boolean> = ref(true),
       isLoading: Ref<boolean> = ref(false),
+      isShortLinkCreated: Ref<boolean> = ref(false),
       URLRef: Ref<string> = ref(""),
-      shortURL: Ref<string> = ref("")
+      shortURL: Ref<string> = ref(""),
+      userLinks: any = ref([]),
+      { v4: uuidv4 } = require('uuid')
 
     const openCloseSidebar = (): void => {
       isSidebarActive.value = !isSidebarActive.value
@@ -83,8 +110,31 @@ export default defineComponent({
       currentActiveTab.value = i
     }
 
+    const generateQRCode = async (urlString: string) => {
+
+      const url = `https://qr-code-by-api-ninjas.p.rapidapi.com/v1/qrcode?data=${urlString}&format=png`
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': `${process.env.VUE_APP_RAPID_API_KEY}`,
+          'X-RapidAPI-Host': 'qr-code-by-api-ninjas.p.rapidapi.com'
+        }
+      }
+
+      await fetch(url, options)
+      .then((res) => res.text())
+      .then((data) => console.log(data))
+      .catch((error) => console.log(error.message))
+    }
+
     const shortenLink = async (urlString: string) => {
+      if (userLinks.value.some((item: any) => item.link === urlString)) {
+        alert('This link already exists!')
+        return
+      }
+
       isLoading.value = true
+
       const url: string = 'https://url-shortener-service.p.rapidapi.com/shorten',
         options = {
           method: 'POST',
@@ -102,21 +152,58 @@ export default defineComponent({
         .then(res => res.json())
         .then((data) => {
           isLoading.value = false
+          isShortLinkCreated.value = true
           shortURL.value = data.result_url
+
+          userLinks.value.push({
+            id: uuidv4(),
+            link: urlString,
+            shortLink: shortURL
+          })
+          localStorage.setItem("userLinks", JSON.stringify(userLinks.value))
         })
         .catch(error => console.log(error.message))
     }
+
+    const copyToClipboard = (text: string): void => {
+      navigator.clipboard.writeText(text)
+      alert('link copied to clipboard')
+
+      setTimeout(() => {
+        isShortLinkCreated.value = false
+      }, 100)
+    }
+
+    const deleteLink = (id: string) => {
+      userLinks.value = userLinks.value.filter((link: any) => link.id !== id)
+
+      localStorage.setItem("userLinks", JSON.stringify(userLinks.value))
+    }
+
+
+    onMounted(() => {
+      let storedUserLinks = localStorage.getItem("userLinks")
+
+      if (storedUserLinks) {
+        userLinks.value = JSON.parse(storedUserLinks)
+      }
+    })
 
     return {
       sidebarItems,
       currentActiveTab,
       isSidebarActive,
       isLoading,
+      isShortLinkCreated,
       setCurrentActiveTab,
       openCloseSidebar,
       shortenLink,
+      copyToClipboard,
+      deleteLink,
+      generateQRCode,
       URLRef,
-      shortURL
+      shortURL,
+      userLinks
     }
   }
 })
@@ -136,31 +223,36 @@ main {
     width: 85%;
     height: 100%;
     padding-inline: 1em;
-    @include flex(column, center, center, 1em);
+    @include flex(column, center, flex-start, 1em);
 
-    .url--field{
+    .url--field {
       background-color: $white;
       box-shadow: var(--shadow-1);
       padding: .5em 1em;
       @include flex(column, center, center, .4em);
+      width: 40%;
 
-      button{
+      button {
         width: 100%;
         padding-block: 8px;
         border: none;
         border-radius: var(--radius-1);
         background-color: $matte-black;
         color: $white;
+        font-size: var(--font-size-2);
+        cursor: pointer;
+
+        &:hover {
+          background-color: $black;
+        }
       }
 
-      h2{
-        font-size: var(--font-size-3);
+      h2 {
+        font-size: var(--font-size-2);
 
-        span{
+        span {
           display: inline-block;
-          padding: .4em;
-          background-color: $green;
-          color: $matte-black;
+          color: $dark-gray;
           font-style: italic;
           border-radius: var(--radius-1);
         }
@@ -170,6 +262,42 @@ main {
     form,
     table {
       width: 100%;
+    }
+
+    table {
+
+      td,
+      th {
+        border: 1px solid $gray;
+        text-align: left;
+        padding: 8px;
+        border-radius: var(--radius-1);
+      }
+
+      td {
+        background-color: $gray;
+        color: $black;
+        font-size: var(--font-size-2);
+
+        button {
+          margin-right: .4em;
+          padding: .4em;
+          border-radius: var(--radius-2);
+          cursor: pointer;
+
+          &:nth-child(2) {
+            background-color: orangered;
+            color: $white;
+          }
+        }
+      }
+
+      th {
+        background-color: $black;
+        color: $white;
+        box-shadow: var(--shadow-1);
+        font-size: var(--font-size-3);
+      }
     }
 
     .form--one {
@@ -235,6 +363,52 @@ main {
         border: none;
         border-radius: var(--radius-1);
         font-size: var(--font-size-2);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+    height: fit-content;
+
+    .sidebar {
+      width: 100%;
+
+      &--content {
+        width: 100%;
+      }
+    }
+
+    .content {
+      width: 100%;
+      padding: 0;
+      justify-content: flex-start;
+      align-items: flex-start;
+      overflow-x: scroll;
+
+      table {
+        td {
+          button {
+            &:first-of-type {
+              margin-bottom: .4em;
+            }
+          }
+        }
+      }
+
+      .url--field {
+        width: 100%;
+      }
+
+      .form--one {
+        width: 100%;
+
+
+        .fields {
+          width: 100%;
+        }
       }
     }
   }

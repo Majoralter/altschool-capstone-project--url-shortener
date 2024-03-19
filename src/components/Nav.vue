@@ -41,7 +41,7 @@ export default defineComponent({
 
   setup() {
     const active = ref(false),
-      windowWidth = ref(0),
+      windowWidth = ref(0)
       const route = useRoute()
 
     interface Active {

@@ -14,9 +14,9 @@
       <li><router-link to="/authenticate/sign-up" class="sign-up__link--desktop">Sign up for free</router-link></li>
     </ul>
 
-    <MenuButton @click-event="openCloseMobileNav" :class="classActive" ref="menuRef" v-if="route.path === '/'" />
+    <MenuButton @click-event="openCloseMobileNav" :class="classActive" v-if="route.path === '/'" />
 
-    <div class="nav__items--mobile" :class="{ active: active }" ref="navRef" @click="openCloseMobileNav"
+    <div class="nav__items--mobile" :class="{ active: active }" @click="openCloseMobileNav"
       v-if="route.path === '/'">
       <ul>
         <li><a href="#features">Features</a></li>
@@ -42,9 +42,6 @@ export default defineComponent({
   setup() {
     const active = ref(false),
       windowWidth = ref(0),
-      navRef = ref(),
-      menuRef = ref()
-
       const route = useRoute()
 
     interface Active {
@@ -78,7 +75,7 @@ export default defineComponent({
 
 
 
-    return { openCloseMobileNav, active, windowWidth, menuRef, navRef, classActive, route}
+    return { openCloseMobileNav, active, windowWidth, classActive, route}
   }
 })
 </script>

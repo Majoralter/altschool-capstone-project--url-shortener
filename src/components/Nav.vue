@@ -4,20 +4,20 @@
       Scissor
     </router-link>
 
-    <ul class="nav__links--desktop">
+    <ul class="nav__links--desktop" v-if="route.path === '/'">
       <li><a href="#features">Features</a></li>
       <li><a href="#faqs">FAQs</a></li>
     </ul>
 
-    <ul class="nav__cta--desktop">
+    <ul class="nav__cta--desktop" v-if="route.path === '/'">
       <li><router-link to="/authenticate/login" class="login__link--desktop">Login</router-link></li>
       <li><router-link to="/authenticate/sign-up" class="sign-up__link--desktop">Sign up for free</router-link></li>
     </ul>
 
-    <MenuButton @click-event="openCloseMobileNav" :class="classActive"
-      ref="menuRef" />
+    <MenuButton @click-event="openCloseMobileNav" :class="classActive" ref="menuRef" v-if="route.path === '/'" />
 
-    <div class="nav__items--mobile" :class="{ active: active }" ref="navRef" @click="openCloseMobileNav">
+    <div class="nav__items--mobile" :class="{ active: active }" ref="navRef" @click="openCloseMobileNav"
+      v-if="route.path === '/'">
       <ul>
         <li><a href="#features">Features</a></li>
         <li><a href="#faqs">FAQs</a></li>
@@ -31,6 +31,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, onBeforeUnmount, onBeforeMount, reactive } from 'vue';
 import MenuButton from "../components/MenuButton.vue"
+import { useRoute } from 'vue-router';
 export default defineComponent({
   name: 'Nav',
 
@@ -43,6 +44,8 @@ export default defineComponent({
       windowWidth = ref(0),
       navRef = ref(),
       menuRef = ref()
+
+      const route = useRoute()
 
     interface Active {
       active: boolean,
@@ -75,7 +78,7 @@ export default defineComponent({
 
 
 
-    return { openCloseMobileNav, active, windowWidth, menuRef, navRef, classActive}
+    return { openCloseMobileNav, active, windowWidth, menuRef, navRef, classActive, route}
   }
 })
 </script>

@@ -8,6 +8,7 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.8",
     "core-js": "^3.8.3",
     "open-props": "^1.6.21",
     "vue": "^3.2.13",

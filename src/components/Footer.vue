@@ -1,6 +1,6 @@
 <template>
   <footer>
-    🫣 designed && coded by <a href="https://twitter.com/MajorAlter">MajorAlter</a> 🫣
+    🫣 designed && developed by <a href="https://twitter.com/MajorAlter">MajorAlter</a> 🫣
   </footer>
 </template>
 
@@ -15,7 +15,7 @@ name: 'Footer'
 footer{
   text-align: center;
   font-size: var(--font-size-3);
-  margin-bottom: var(--size-5);
+  margin-block: var(--size-5);
 }
 </style>
 

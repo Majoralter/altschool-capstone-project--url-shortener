@@ -10,25 +10,26 @@
     </ul>
 
     <ul class="nav__cta--desktop">
-      <li><router-link to="/" class="login__link--desktop">Login</router-link></li>
-      <li><router-link to="/" class="sign-up__link--desktop">Sign up for free</router-link></li>
+      <li><router-link to="/authenticate/login" class="login__link--desktop">Login</router-link></li>
+      <li><router-link to="/authenticate/sign-up" class="sign-up__link--desktop">Sign up for free</router-link></li>
     </ul>
 
-    <MenuButton @click-event="openCloseMobileNav" :class="{ active: active, 'disable': windowWidth > 560 }" />
+    <MenuButton @click-event="openCloseMobileNav" :class="classActive"
+      ref="menuRef" />
 
-    <div class="nav__items--mobile" :class="{ active: active }">
+    <div class="nav__items--mobile" :class="{ active: active }" ref="navRef" @click="openCloseMobileNav">
       <ul>
         <li><a href="#features">Features</a></li>
         <li><a href="#faqs">FAQs</a></li>
-        <li><router-link to="/">Login</router-link></li>
-        <li><router-link to="/">Sign up</router-link></li>
+        <li><router-link to="/authenticate/login">Login</router-link></li>
+        <li><router-link to="/authenticate/sign-up">Sign up</router-link></li>
       </ul>
     </div>
   </nav>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onBeforeUnmount, onBeforeMount } from 'vue';
+import { defineComponent, ref, onMounted, onBeforeUnmount, onBeforeMount, reactive } from 'vue';
 import MenuButton from "../components/MenuButton.vue"
 export default defineComponent({
   name: 'Nav',
@@ -39,19 +40,32 @@ export default defineComponent({
 
   setup() {
     const active = ref(false),
-      windowWidth = ref(0)
+      windowWidth = ref(0),
+      navRef = ref(),
+      menuRef = ref()
+
+    interface Active {
+      active: boolean,
+      disable: boolean
+    }
+
+    const classActive: Active = reactive({ active: active.value, disable: true})
 
     const openCloseMobileNav = (): void => {
-      active.value = !active.value
+    active.value = !active.value
+    classActive.active = active.value
     }
+
 
     onBeforeMount(() => {
       windowWidth.value = window.innerWidth
+      classActive.disable = windowWidth.value > 560 ? true : false
     })
 
     onMounted(() => {
       window.addEventListener("resize", () => {
         windowWidth.value = window.innerWidth
+        classActive.disable = windowWidth.value > 560 ? true : false
       })
     })
 
@@ -59,7 +73,9 @@ export default defineComponent({
       window.removeEventListener("resize", () => { })
     })
 
-    return { openCloseMobileNav, active, windowWidth }
+
+
+    return { openCloseMobileNav, active, windowWidth, menuRef, navRef, classActive}
   }
 })
 </script>
@@ -144,7 +160,7 @@ nav {
     transition: all .5s var(--ease-3);
     opacity: 0;
 
-    &.active{
+    &.active {
       transform: translate(-50%, 0);
       opacity: 1;
     }

@@ -7,7 +7,7 @@
         easy scanning, we've got you covered.</p>
 
       <ul class="hero__section-cta">
-        <li><router-link to="/" class="sign-up__cta">Get started for free</router-link></li>
+        <li><router-link to="/authenticate/sign-up" class="sign-up__cta">Get started for free</router-link></li>
         <li><router-link to="/" class="test__cta">Try on guest account</router-link></li>
       </ul>
     </section>
@@ -188,6 +188,7 @@ main {
   .faq__section {
     @include flex(column, center, center, 2em);
     width: 100%;
+    height: 80dvh;
 
     h2 {
       color: $black;

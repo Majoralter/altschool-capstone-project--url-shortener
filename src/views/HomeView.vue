@@ -38,10 +38,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, onMounted, ref } from 'vue';
 import type { Ref } from 'vue';
 import { faqs } from '@/composables/faq';
 import Loader from '@/components/Loader.vue';
+import { useGetCurrentUser } from '@/composables/useGetCurrentUser';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: 'HomeView',
@@ -74,7 +76,9 @@ export default defineComponent({
     ]),
       faqItems = ref(faqs),
       activeIndex: Ref<Number> = ref(0),
-      showLoader: Ref<Boolean> = ref(false)
+      showLoader: Ref<Boolean> = ref(false),
+      currentUser = ref(),
+      router = useRouter()
 
     const setActiveIndex = (id: number): void => {
       showLoader.value = true
@@ -84,6 +88,15 @@ export default defineComponent({
         showLoader.value = false
       }, 700)
     }
+
+    onMounted(async () => {
+      currentUser.value = await useGetCurrentUser()
+
+      if (currentUser.value !== null) {
+        router.push({ path: '/user/dashboard' })
+      }
+
+    })
 
     return { featureItems, faqItems, activeIndex, showLoader, setActiveIndex }
   }
@@ -269,8 +282,8 @@ main {
       }
     }
 
-    .faq__section{
-      .faqs{
+    .faq__section {
+      .faqs {
         width: 90%;
       }
     }

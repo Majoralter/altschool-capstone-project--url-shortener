@@ -4,8 +4,10 @@
       <MenuButton @click-event="openCloseSidebar" :class="{ active: isSidebarActive }" />
 
       <div class="sidebar--content" v-if="isSidebarActive">
-        <button v-for="(item, index) in sidebarItems" :key="item" @click="setCurrentActiveTab(index)">
+        <button v-for="(item, index) in sidebarItems" :key="item" @click="setCurrentActiveTab(index)"
+          :class="{ active: index === currentActiveTab }">
           {{ item }}
+          <sup v-show="index === 2">{{ userLinks.length }}</sup>
         </button>
       </div>
     </div>
@@ -33,15 +35,20 @@
         </div>
       </form>
 
+      <div class="wrapper" v-show="currentActiveTab === 1 && isQRCodeCreated">
+        <img :src="QRImageSrc" alt="QR code">
+        <button @click="downLoadQRCode(QRImageSrc)">Download as png</button>
+      </div>
+
       <form v-if="currentActiveTab === 1" class="form--one" @submit.prevent="generateQRCode(URLRef)">
         <div class="fields">
           <h1>Generate QR Code</h1>
           <div class="field">
-            <label for="url">URL</label>
+            <label for="url">Text/URL</label>
             <input type="text" id="url" v-model="URLRef" required>
           </div>
 
-          <button>
+          <button :disabled="isQRCodeCreated">
             <Loader span-dimension="20px" v-if="isLoading" />
             <span v-else>Generate</span>
           </button>
@@ -78,6 +85,7 @@ import { defineComponent, onMounted, ref } from 'vue';
 import type { Ref } from 'vue';
 import MenuButton from '@/components/MenuButton.vue';
 import Loader from '@/components/Loader.vue';
+import { supabase } from '@/lib/supabaseClient';
 
 export default defineComponent({
   name: 'Dashboard',
@@ -97,9 +105,11 @@ export default defineComponent({
       isSidebarActive: Ref<boolean> = ref(true),
       isLoading: Ref<boolean> = ref(false),
       isShortLinkCreated: Ref<boolean> = ref(false),
+      isQRCodeCreated: Ref<boolean> = ref(false),
       URLRef: Ref<string> = ref(""),
       shortURL: Ref<string> = ref(""),
       userLinks: any = ref([]),
+      QRImageSrc: Ref<string> = ref(""),
       { v4: uuidv4 } = require('uuid')
 
     const openCloseSidebar = (): void => {
@@ -111,6 +121,8 @@ export default defineComponent({
     }
 
     const generateQRCode = async (urlString: string) => {
+      isLoading.value = true
+      isQRCodeCreated.value = false
 
       const url = `https://qr-code-by-api-ninjas.p.rapidapi.com/v1/qrcode?data=${urlString}&format=png`
       const options = {
@@ -122,9 +134,27 @@ export default defineComponent({
       }
 
       await fetch(url, options)
-      .then((res) => res.text())
-      .then((data) => console.log(data))
-      .catch((error) => console.log(error.message))
+        .then((res) => res.text())
+        .then((data) => {
+          isLoading.value = false
+          isQRCodeCreated.value = true
+          QRImageSrc.value = `data:image/png;base64, ${data}`
+        })
+        .catch((error) => console.log(error.message))
+    }
+
+    const downLoadQRCode = async (src: string) => {
+      const image = await fetch(src),
+        imageBlob = await image.blob(),
+        imageURL = URL.createObjectURL(imageBlob),
+        link = document.createElement('a')
+
+      link.href = imageURL
+      link.download = 'download'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      isQRCodeCreated.value = false
     }
 
     const shortenLink = async (urlString: string) => {
@@ -181,7 +211,7 @@ export default defineComponent({
     }
 
 
-    onMounted(() => {
+    onMounted(async () => {
       let storedUserLinks = localStorage.getItem("userLinks")
 
       if (storedUserLinks) {
@@ -195,15 +225,18 @@ export default defineComponent({
       isSidebarActive,
       isLoading,
       isShortLinkCreated,
+      isQRCodeCreated,
       setCurrentActiveTab,
       openCloseSidebar,
       shortenLink,
       copyToClipboard,
       deleteLink,
       generateQRCode,
+      downLoadQRCode,
       URLRef,
       shortURL,
-      userLinks
+      userLinks,
+      QRImageSrc
     }
   }
 })
@@ -213,8 +246,8 @@ export default defineComponent({
 @import "../sass/app.scss";
 
 main {
-  height: 75dvh;
-  min-height: 75dvh;
+  height: 80dvh;
+  min-height: 80dvh;
   @include flex(row, flex-start, flex-start, 2em);
   transition: all .3s var(--ease-3);
   padding-inline: var(--size-fluid-4);
@@ -224,6 +257,30 @@ main {
     height: 100%;
     padding-inline: 1em;
     @include flex(column, center, flex-start, 1em);
+
+    .wrapper {
+      padding: 1em;
+      border-radius: var(--radius-2);
+      background-color: $white;
+      box-shadow: var(--shadow-2);
+      @include flex(column, center, center, 1em);
+      width: 40%;
+
+      button {
+        width: 100%;
+        padding-block: 8px;
+        border: none;
+        border-radius: var(--radius-1);
+        background-color: $matte-black;
+        color: $white;
+        font-size: var(--font-size-2);
+        cursor: pointer;
+
+        &:hover {
+          background-color: $black;
+        }
+      }
+    }
 
     .url--field {
       background-color: $white;
@@ -363,6 +420,15 @@ main {
         border: none;
         border-radius: var(--radius-1);
         font-size: var(--font-size-2);
+
+        &.active{
+          border-left: solid var(--border-size-3) $green;
+          background-color: $black;
+        }
+
+        sup {
+          color: $green;
+        }
       }
     }
   }
@@ -387,6 +453,10 @@ main {
       justify-content: flex-start;
       align-items: flex-start;
       overflow-x: scroll;
+
+      .wrapper {
+        width: 100%;
+      }
 
       table {
         td {

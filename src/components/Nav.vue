@@ -16,8 +16,7 @@
 
     <MenuButton @click-event="openCloseMobileNav" :class="classActive" v-if="route.path === '/'" />
 
-    <div class="nav__items--mobile" :class="{ active: active }" @click="openCloseMobileNav"
-      v-if="route.path === '/'">
+    <div class="nav__items--mobile" :class="{ active: active }" @click="openCloseMobileNav" v-if="route.path === '/'">
       <ul>
         <li><a href="#features">Features</a></li>
         <li><a href="#faqs">FAQs</a></li>
@@ -25,13 +24,16 @@
         <li><router-link to="/authenticate/sign-up">Sign up</router-link></li>
       </ul>
     </div>
+
+    <button class="sign-out--button" @click="signOutUser" v-if="route.path === '/user/dashboard'">Sign out</button>
   </nav>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, onBeforeUnmount, onBeforeMount, reactive } from 'vue';
 import MenuButton from "../components/MenuButton.vue"
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { supabase } from '@/lib/supabaseClient';
 export default defineComponent({
   name: 'Nav',
 
@@ -42,18 +44,26 @@ export default defineComponent({
   setup() {
     const active = ref(false),
       windowWidth = ref(0)
-      const route = useRoute()
+    const route = useRoute(),
+      router = useRouter()
 
     interface Active {
       active: boolean,
       disable: boolean
     }
 
-    const classActive: Active = reactive({ active: active.value, disable: true})
+    const classActive: Active = reactive({ active: active.value, disable: true })
 
     const openCloseMobileNav = (): void => {
-    active.value = !active.value
-    classActive.active = active.value
+      active.value = !active.value
+      classActive.active = active.value
+    }
+
+    const signOutUser = async () => {
+      await supabase.auth.signOut()
+      localStorage.clear()
+
+      router.push({ path: '/' })
     }
 
 
@@ -75,7 +85,7 @@ export default defineComponent({
 
 
 
-    return { openCloseMobileNav, active, windowWidth, classActive, route}
+    return { openCloseMobileNav, signOutUser, active, windowWidth, classActive, route }
   }
 })
 </script>
@@ -91,6 +101,16 @@ nav {
   .logo {
     font-size: var(--font-size-5);
     color: $black;
+  }
+
+  .sign-out--button {
+    padding: 8px 24px;
+    background-color: $black;
+    color: $white;
+    border: none;
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    font-size: var(--font-size-3);
   }
 
   ul {

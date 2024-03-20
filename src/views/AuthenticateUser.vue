@@ -124,6 +124,7 @@ export default defineComponent({
             window.location.href = redirectURL.value
           }
         } catch (error: any) {
+          alert(error.message)
           console.log(error.message)
         }
       }

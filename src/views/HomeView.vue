@@ -38,7 +38,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+import { defineComponent, onBeforeMount, ref } from 'vue';
 import type { Ref } from 'vue';
 import { faqs } from '@/composables/faq';
 import Loader from '@/components/Loader.vue';
@@ -89,7 +89,7 @@ export default defineComponent({
       }, 700)
     }
 
-    onMounted(async () => {
+    onBeforeMount(async () => {
       currentUser.value = await useGetCurrentUser()
 
       if (currentUser.value !== null) {
